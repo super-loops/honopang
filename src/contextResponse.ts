@@ -1,7 +1,5 @@
 import { type Context } from "hono";
 import { type FC } from "hono/jsx";
-import { StatusError } from "./common"
-
 
 /* USAGE
   app.get("/user/foo", (c)=>{
@@ -34,22 +32,22 @@ import { StatusError } from "./common"
 
 export function responseJsonError(
   c: Context,
-  error: Error | StatusError,
+  error: unknown,
   transform?: (json: { status: number; message: string }) => any
 ) {
-  const status: number = 'status' in error ? error.status : 500;
-  const defaultJson = { status, message: error.message };
+  const status: number = (typeof error === 'object' && error && 'status' in error) ? (error.status as number) : 500;
+  const defaultJson = { status, message: (error as any)?.message };
   const responseJson = transform ? transform(defaultJson) : defaultJson;
   return c.json(responseJson, status as any);
 }
 
 export function responseTextError(
   c: Context,
-  error: Error | StatusError,
+  error: unknown,
   transform?: (text: string) => string
 ) {
-  const status: number = 'status' in error ? error.status : 500;
-  const defaultText = `Error: ${error.message}`;
+  const status: number = (typeof error === 'object' && error && 'status' in error) ? (error.status as number) : 500;
+  const defaultText = `Error: ${(error as any)?.message}`;
   const responseText = transform ? transform(defaultText) : defaultText;
   return c.text(responseText, status as any);
 }
@@ -59,7 +57,7 @@ export function responseTextError(
   import { type FC } from 'hono/jsx';
 
   // JSX 컴포넌트를 사용한 에러 페이지
-  const ErrorPage: FC<{ error: Error | StatusError }> = ({ error }) => (
+  const ErrorPage: FC<{ error: unknown }> = ({ error }) => (
     <html>
       <head><title>Error</title></head>
       <body>
@@ -82,10 +80,10 @@ export function responseTextError(
 
 export function responseHtmlError(
   c: Context,
-  error: Error | StatusError,
-  template?: FC<{ error: Error | StatusError }> | string
+  error: unknown,
+  template?: FC<{ error: unknown }> | string
 ) {
-  const status: number = 'status' in error ? error.status : 500;
+  const status: number = (typeof error === 'object' && error && 'status' in error) ? (error.status as number) : 500;
 
   if (template) {
     if (typeof template === 'function') {
@@ -93,11 +91,11 @@ export function responseHtmlError(
       try {
         const Component = template;
         const element = Component({ error });
-        const htmlString = element ? element.toString() : `<h1>Error</h1><p>${error.message}</p>`;
+        const htmlString = element ? element.toString() : `<h1>Error</h1><p>${(error as any)?.message}</p>`;
         return c.html(htmlString, status as any);
       } catch (renderError) {
         console.error("[ERROR] Failed to render template component:", renderError);
-        return c.html(`<h1>Error</h1><p>${error.message}</p>`, status as any);
+        return c.html(`<h1>Error</h1><p>${(error as any)?.message}</p>`, status as any);
       }
     } else {
       // 문자열 템플릿인 경우
@@ -105,6 +103,6 @@ export function responseHtmlError(
     }
   } else {
     // 기본 템플릿
-    return c.html(`<h1>Error</h1><p>${error.message}</p>`, status as any);
+    return c.html(`<h1>Error</h1><p>${(error as any)?.message}</p>`, status as any);
   }
 }
