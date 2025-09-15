@@ -1,6 +1,6 @@
 {
   "name": "honopang",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Supports necessary functions for Bun and Hono in railway functions.",
   "author": {
     "name": "AHN HO JUNG",
