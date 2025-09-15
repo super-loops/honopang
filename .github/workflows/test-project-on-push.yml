@@ -1,12 +1,12 @@
-name: Test Bun Package on CI
+name: Test Bun Package before Deploy
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  test_and_deploy:
-    name: Test and Deploy Bun Package
+  test_package:
+    name: Test before deploy bun package
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

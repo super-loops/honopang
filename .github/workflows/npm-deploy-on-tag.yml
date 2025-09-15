@@ -1,4 +1,4 @@
-name: Deploy NPM Package on Tag
+name: Deploy NPM Package and Create Tag
 
 permissions:
   contents: write  # 태그 푸시를 위해 write 권한 필요
