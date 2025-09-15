@@ -1,5 +1,5 @@
 import { describe, test, expect, spyOn } from "bun:test";
-import { responseJsonError, responseTextError, responseTemplateError } from "./contextResponse";
+import { responseJsonError, responseTextError, responseHtmlError } from "./contextResponse";
 import { StatusError } from "./common";
 import { type FC } from "hono/jsx";
 
@@ -116,38 +116,46 @@ describe("responseJsonError", () => {
     });
   });
 
-  describe("verbose 옵션 테스트", () => {
-    test("verbose=true (기본값)일 때 console.error 호출", () => {
-      const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
-      const context = createMockContext();
-      const error = new StatusError("Test error", 400);
-
-      responseJsonError(context, error, true);
-
-      expect(consoleSpy).toHaveBeenCalledWith("[ERROR] responeOfError:", error);
-      consoleSpy.mockRestore();
-    });
-
-    test("verbose=false일 때 console.error 호출하지 않음", () => {
-      const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
-      const context = createMockContext();
-      const error = new StatusError("Test error", 400);
-
-      responseJsonError(context, error, false);
-
-      expect(consoleSpy).not.toHaveBeenCalled();
-      consoleSpy.mockRestore();
-    });
-
-    test("verbose 매개변수를 생략하면 기본값 true로 동작", () => {
-      const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
+  describe("transform 함수 테스트", () => {
+    test("transform 함수가 제공되지 않으면 기본 JSON 반환", () => {
       const context = createMockContext();
       const error = new StatusError("Test error", 400);
 
       responseJsonError(context, error);
+      const lastCall = context.getLastJsonCall();
 
-      expect(consoleSpy).toHaveBeenCalledWith("[ERROR] responeOfError:", error);
-      consoleSpy.mockRestore();
+      expect(lastCall.data).toEqual({ status: 400, message: "Test error" });
+      expect(lastCall.status).toBe(400);
+    });
+
+    test("transform 함수로 JSON 응답을 변환", () => {
+      const context = createMockContext();
+      const error = new StatusError("Test error", 400);
+
+      responseJsonError(context, error, (json) => {
+        return { ...json, detail: { timestamp: "2023-01-01" } };
+      });
+      const lastCall = context.getLastJsonCall();
+
+      expect(lastCall.data).toEqual({
+        status: 400,
+        message: "Test error",
+        detail: { timestamp: "2023-01-01" }
+      });
+      expect(lastCall.status).toBe(400);
+    });
+
+    test("transform 함수로 완전히 다른 구조의 응답 생성", () => {
+      const context = createMockContext();
+      const error = new StatusError("Test error", 400);
+
+      responseJsonError(context, error, (json) => {
+        return { error: json.message, code: json.status };
+      });
+      const lastCall = context.getLastJsonCall();
+
+      expect(lastCall.data).toEqual({ error: "Test error", code: 400 });
+      expect(lastCall.status).toBe(400);
     });
   });
 
@@ -295,32 +303,43 @@ describe("responseTextError", () => {
     });
   });
 
-  describe("verbose 옵션 테스트", () => {
-    test("verbose=true (기본값)일 때 console.error 호출", () => {
-      const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
+  describe("transform 함수 테스트", () => {
+    test("transform 함수가 제공되지 않으면 기본 텍스트 반환", () => {
       const context = createMockContext();
       const error = new StatusError("Test error", 400);
 
-      responseTextError(context, error, true);
+      responseTextError(context, error);
+      const lastCall = context.getLastTextCall();
 
-      expect(consoleSpy).toHaveBeenCalledWith("[ERROR] responseTextError:", error);
-      consoleSpy.mockRestore();
+      expect(lastCall.text).toBe("Error: Test error");
+      expect(lastCall.status).toBe(400);
     });
 
-    test("verbose=false일 때 console.error 호출하지 않음", () => {
-      const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
+    test("transform 함수로 텍스트 응답을 변환", () => {
       const context = createMockContext();
       const error = new StatusError("Test error", 400);
 
-      responseTextError(context, error, false);
+      responseTextError(context, error, (text) => `[ERROR] ${text}`);
+      const lastCall = context.getLastTextCall();
 
-      expect(consoleSpy).not.toHaveBeenCalled();
-      consoleSpy.mockRestore();
+      expect(lastCall.text).toBe("[ERROR] Error: Test error");
+      expect(lastCall.status).toBe(400);
+    });
+
+    test("transform 함수로 완전히 다른 형태의 텍스트 생성", () => {
+      const context = createMockContext();
+      const error = new StatusError("Test error", 400);
+
+      responseTextError(context, error, (text) => `FAILURE: ${text.replace("Error: ", "")}`);
+      const lastCall = context.getLastTextCall();
+
+      expect(lastCall.text).toBe("FAILURE: Test error");
+      expect(lastCall.status).toBe(400);
     });
   });
 });
 
-describe("responseTemplateError", () => {
+describe("responseHtmlError", () => {
   describe("JSX 컴포넌트 템플릿 처리", () => {
     test("JSX 컴포넌트를 HTML로 렌더링", () => {
       const context = createMockContext();
@@ -330,7 +349,7 @@ describe("responseTemplateError", () => {
         toString: () => `<div><h1>Error ${('status' in error ? error.status : 500)}</h1><p>${error.message}</p></div>`
       } as any);
 
-      responseTemplateError(context, error, ErrorComponent);
+      responseHtmlError(context, error, ErrorComponent);
       const lastCall = context.getLastHtmlCall();
 
       expect(lastCall.html).toBe("<div><h1>Error 404</h1><p>Page Not Found</p></div>");
@@ -345,7 +364,7 @@ describe("responseTemplateError", () => {
         throw new Error("Render failed");
       };
 
-      responseTemplateError(context, error, FailingComponent);
+      responseHtmlError(context, error, FailingComponent);
       const lastCall = context.getLastHtmlCall();
 
       expect(lastCall.html).toBe("<h1>Error</h1><p>Server Error</p>");
@@ -359,7 +378,7 @@ describe("responseTemplateError", () => {
       const error = new StatusError("Forbidden", 403);
       const template = "<html><body><h1>Access Denied</h1></body></html>";
 
-      responseTemplateError(context, error, template);
+      responseHtmlError(context, error, template);
       const lastCall = context.getLastHtmlCall();
 
       expect(lastCall.html).toBe(template);
@@ -372,7 +391,7 @@ describe("responseTemplateError", () => {
       const context = createMockContext();
       const error = new Error("General Error");
 
-      responseTemplateError(context, error);
+      responseHtmlError(context, error);
       const lastCall = context.getLastHtmlCall();
 
       expect(lastCall.html).toBe("<h1>Error</h1><p>General Error</p>");
@@ -383,35 +402,11 @@ describe("responseTemplateError", () => {
       const context = createMockContext();
       const error = new StatusError("Bad Request", 400);
 
-      responseTemplateError(context, error);
+      responseHtmlError(context, error);
       const lastCall = context.getLastHtmlCall();
 
       expect(lastCall.html).toBe("<h1>Error</h1><p>Bad Request</p>");
       expect(lastCall.status).toBe(400);
-    });
-  });
-
-  describe("verbose 옵션 테스트", () => {
-    test("verbose=true (기본값)일 때 console.error 호출", () => {
-      const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
-      const context = createMockContext();
-      const error = new StatusError("Test error", 400);
-
-      responseTemplateError(context, error, undefined, true);
-
-      expect(consoleSpy).toHaveBeenCalledWith("[ERROR] responseTemplateError:", error);
-      consoleSpy.mockRestore();
-    });
-
-    test("verbose=false일 때 console.error 호출하지 않음", () => {
-      const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
-      const context = createMockContext();
-      const error = new StatusError("Test error", 400);
-
-      responseTemplateError(context, error, undefined, false);
-
-      expect(consoleSpy).not.toHaveBeenCalled();
-      consoleSpy.mockRestore();
     });
   });
 });

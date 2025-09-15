@@ -97,21 +97,39 @@ try {
 Handles errors and returns standardized JSON error responses.
 
 ```typescript
-app.get("/user/foo", (c) => {
+import { responseJsonError } from "honopang";
+
+// Basic usage - simple error handling
+app.get("/user/simple", (c) => {
   try {
-    throw new Error("Foo Error")
+    throw new Error("Something went wrong");
   } catch (error) {
     return responseJsonError(c, error);
-    // { status: 500, message: "Foo Error"}
+    // Returns: { status: 500, message: "Something went wrong" }
   }
 });
 
-app.get("/user/bar", (c) => {
+app.get("/user/status", (c) => {
   try {
-    throw new StatusError("Bar Error", 501)
+    throw new StatusError("User not found", 404);
   } catch (error) {
     return responseJsonError(c, error);
-    // { status: 501, message: "Bar Error"}
+    // Returns: { status: 404, message: "User not found" }
+  }
+});
+
+// Advanced usage - with transform function
+app.get("/user/detailed", (c) => {
+  try {
+    throw new StatusError("Validation failed", 400);
+  } catch (error) {
+    return responseJsonError(c, error, (json) => {
+      return { 
+        ...json, 
+        timestamp: new Date().toISOString(),
+        requestId: "req_12345"
+      };
+    });
   }
 });
 ```
@@ -122,6 +140,7 @@ Handles errors and returns plain text error responses.
 ```typescript
 import { responseTextError } from "honopang";
 
+// Basic usage - simple error handling
 app.get("/api/status", (c) => {
   try {
     throw new StatusError("Service Unavailable", 503);
@@ -131,24 +150,36 @@ app.get("/api/status", (c) => {
   }
 });
 
-app.get("/api/health", (c) => {
+// Advanced usage - with transform function
+app.get("/api/logs", (c) => {
   try {
-    throw new Error("Database connection failed");
+    throw new StatusError("Log file not found", 404);
   } catch (error) {
-    return responseTextError(c, error); // verbose=false
-    // Returns: "Error: Database connection failed" with status 500
+    return responseTextError(c, error, (text) => `[API ERROR] ${text}`);
+    // Returns: "[API ERROR] Error: Log file not found" with status 404
   }
 });
+
 ```
 
-### responseTemplateError
+### responseHtmlError
 Handles errors and returns HTML responses with customizable templates.
 
 ```typescript
-import { responseTemplateError } from "honopang";
+import { responseHtmlError } from "honopang";
 import { type FC } from 'hono/jsx';
 
-// JSX component template
+// Basic usage - default template
+app.get("/page/simple", (c) => {
+  try {
+    throw new Error("Page error");
+  } catch (error) {
+    return responseHtmlError(c, error);
+    // Returns: "<h1>Error</h1><p>Page error</p>" with status 500
+  }
+});
+
+// Advanced usage - JSX component template
 const ErrorPage: FC<{ error: Error | StatusError }> = ({ error }) => (
   <html>
     <head><title>Error</title></head>
@@ -164,27 +195,17 @@ app.get("/page/user", (c) => {
   try {
     throw new StatusError("User Not Found", 404);
   } catch (error) {
-    return responseTemplateError(c, error, ErrorPage);
+    return responseHtmlError(c, error, ErrorPage);
   }
 });
 
-// String template
+// Advanced usage - String template
 app.get("/page/admin", (c) => {
   try {
     throw new StatusError("Access Denied", 403);
   } catch (error) {
     const template = `<html><body><h1>Access Denied</h1><p>${error.message}</p></body></html>`;
-    return responseTemplateError(c, error, template);
-  }
-});
-
-// Default template (no template provided)
-app.get("/page/api", (c) => {
-  try {
-    throw new Error("API Error");
-  } catch (error) {
-    return responseTemplateError(c, error);
-    // Returns: "<h1>Error</h1><p>API Error</p>" with status 500
+    return responseHtmlError(c, error, template);
   }
 });
 ```

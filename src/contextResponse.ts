@@ -8,33 +8,50 @@ import { StatusError } from "./common"
     try {
       throw new Error("Foo Error")
     } catch (error) {
-      return responseJsonError(c, error);
+      return responseJsonError(c, error); // 기본 렌더링
     }
   });
+  
   app.get("/user/bar", (c)=>{
     try {
       throw new StatusError("Bar Error", 501)
     }
     catch (error) {
-      return responseJsonError(c, error);
+      return responseJsonError(c, error, (json) => {
+        return { ...json, detail: { timestamp: new Date().toISOString() } };
+      });
+    }
+  });
+
+  app.get("/user/text", (c)=>{
+    try {
+      throw new Error("Text Error")
+    } catch (error) {
+      return responseTextError(c, error, (text) => `[Error] ${text}`);
     }
   });
 */
 
-export function responseJsonError(c: Context, error: Error | StatusError, verbose: boolean = true) {
-  if (verbose) {
-    console.error("[ERROR] responeOfError:", error);
-  }
-  const status: number = 'status' in error ? error.status : 500
-  return c.json({ status, message: error.message }, status as any);
+export function responseJsonError(
+  c: Context,
+  error: Error | StatusError,
+  transform?: (json: { status: number; message: string }) => any
+) {
+  const status: number = 'status' in error ? error.status : 500;
+  const defaultJson = { status, message: error.message };
+  const responseJson = transform ? transform(defaultJson) : defaultJson;
+  return c.json(responseJson, status as any);
 }
 
-export function responseTextError(c: Context, error: Error | StatusError, verbose: boolean = true) {
-  if (verbose) {
-    console.error("[ERROR] responseTextError:", error);
-  }
-  const status: number = 'status' in error ? error.status : 500
-  return c.text(`Error: ${error.message}`, status as any);
+export function responseTextError(
+  c: Context,
+  error: Error | StatusError,
+  transform?: (text: string) => string
+) {
+  const status: number = 'status' in error ? error.status : 500;
+  const defaultText = `Error: ${error.message}`;
+  const responseText = transform ? transform(defaultText) : defaultText;
+  return c.text(responseText, status as any);
 }
 
 /* USAGE
@@ -58,20 +75,16 @@ export function responseTextError(c: Context, error: Error | StatusError, verbos
       throw new StatusError("Baz Error", 404)
     }
     catch (error) {
-      return responseTemplateError(c, error, ErrorPage);
+      return responseHtmlError(c, error, ErrorPage);
     }
   });
 */
 
-export function responseTemplateError(
+export function responseHtmlError(
   c: Context,
   error: Error | StatusError,
-  template?: FC<{ error: Error | StatusError }> | string,
-  verbose: boolean = true
+  template?: FC<{ error: Error | StatusError }> | string
 ) {
-  if (verbose) {
-    console.error("[ERROR] responseTemplateError:", error);
-  }
   const status: number = 'status' in error ? error.status : 500;
 
   if (template) {
