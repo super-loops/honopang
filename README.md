@@ -13,7 +13,7 @@ A utility library for Bun functions on Railway.
 
 **This library is specifically designed for Railway's Bun runtime environment only.**
 
-Please note that this library is specifically designed for Railway's Bun and Hono environment, not for Node.js environments.
+Please note that this library is specifically designed for Railway's Bun and Hono environment, and has not been tested in other environments.
 
 - **Runtime**: Bun v1.2.8+
 - **Platform**: Railway Functions only
