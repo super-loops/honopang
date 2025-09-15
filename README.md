@@ -1,3 +1,5 @@
+[![npm version](https://img.shields.io/npm/v/honopang)](https://www.npmjs.com/package/honopang)
+
 # Honopang (on Railway Functions) 🚂
 
 A utility library for Bun functions on Railway.
