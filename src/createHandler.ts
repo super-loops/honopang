@@ -5,7 +5,7 @@ import { StatusError } from "./common";
 
   const authHandler = createNextHandlerIfAuthorization(
     async function (token: string) {
-      const url = new URL(`/v1/apib/bearer/${token}`, APIN_AUTH_INTERNAL_URL);
+      const url = new URL(`/v1/bearer-check/${token}`, OTHER_FUNCTION_INTERNAL_URL);
       const response = await fetch(url, {
         method: "GET",
       });
