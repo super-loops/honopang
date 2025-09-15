@@ -42,6 +42,37 @@ jobs:
           echo "Built files are in dist/ directory"
           ls -la .
 
+      - name: Get package version
+        id: package_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG_NAME="v$VERSION"
+          echo "📦 Package version: $VERSION"
+          echo "🏷️ Tag name: $TAG_NAME"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Check if tag already exists
+        run: |
+          TAG_NAME="${{ steps.package_version.outputs.tag_name }}"
+          echo "🔍 Checking if tag already exists: $TAG_NAME"
+          
+          # Check if tag already exists locally
+          if git tag -l | grep -q "^$TAG_NAME$"; then
+            echo "❌ Error: Tag $TAG_NAME already exists locally"
+            echo "This version has already been deployed. Please update the version in package.json"
+            exit 1
+          fi
+          
+          # Check if tag already exists on remote
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG_NAME$"; then
+            echo "❌ Error: Tag $TAG_NAME already exists on remote repository"
+            echo "This version has already been deployed. Please update the version in package.json"
+            exit 1
+          fi
+          
+          echo "✅ Tag $TAG_NAME does not exist, proceeding with deployment"
+
       - name: Setup npm authentication
         run: | #shell
           # Check npm authentication
@@ -64,16 +95,8 @@ jobs:
           npm publish --registry=${{ env.NPM_REGISTRY_URL }}
           echo "✅ NPM package published successfully!"
 
-      - name: Get package version and create tag
-        if: steps.npm_publish.outcome == 'success'
+      - name: Setup Git configuration
         run: |
-          # Read version from package.json
-          VERSION=$(node -p "require('./package.json').version")
-          TAG_NAME="v$VERSION"
-          
-          echo "📦 Package version: $VERSION"
-          echo "🏷️ Creating tag: $TAG_NAME"
-          
           # Get current commit author information
           COMMIT_EMAIL=$(git log -1 --pretty=format:'%ae')
           COMMIT_NAME=$(git log -1 --pretty=format:'%an')
@@ -83,6 +106,11 @@ jobs:
           # Configure Git
           git config --local user.email "$COMMIT_EMAIL"
           git config --local user.name "$COMMIT_NAME"
+
+      - name: Create and push tag
+        run: |
+          TAG_NAME="${{ steps.package_version.outputs.tag_name }}"
+          echo "🏷️ Creating and pushing tag: $TAG_NAME"
           
           # Create and push tag
           git tag $TAG_NAME
