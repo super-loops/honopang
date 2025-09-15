@@ -1,4 +1,4 @@
-name: Deploy Bun Package on CI
+name: Deploy Bun Package to NPM
 
 permissions:
   contents: read
@@ -11,7 +11,7 @@ on:
 
 env:
   NPM_REGISTRY_URL: https://registry.npmjs.org/
-  NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  NPM_AUTH_TOKEN: ${{ secrets.RAILWAY_SUPPORTS_NPM_TOKEN_W1 }}
 
 jobs:
   test_and_deploy:
