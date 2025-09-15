@@ -1,5 +1,7 @@
 name: 01. Test Bun Package before Deploy
 
+run-name: "🚀 Test honopang (${{ github.sha }}) by @${{ github.actor }}"
+
 on:
   push:
     branches: [ "main" ]

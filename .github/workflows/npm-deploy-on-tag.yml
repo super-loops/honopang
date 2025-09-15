@@ -1,5 +1,7 @@
 name: 02. Deploy NPM Package and Create Tag
 
+run-name: "🚀 Deploy honopang (${{ github.sha }}) by @${{ github.actor }}"
+
 permissions:
   contents: write  # 태그 푸시를 위해 write 권한 필요
   packages: write
@@ -51,6 +53,9 @@ jobs:
           echo "🏷️ Tag name: $TAG_NAME"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          
+          # Update workflow run name with version
+          echo "::notice title=Deploying Version::📦 Deploying honopang@$VERSION"
 
       - name: Check if tag already exists
         run: |
@@ -110,6 +115,7 @@ jobs:
       - name: Create and push tag
         run: |
           TAG_NAME="${{ steps.package_version.outputs.tag_name }}"
+          VERSION="${{ steps.package_version.outputs.version }}"
           echo "🏷️ Creating and pushing tag: $TAG_NAME"
           
           # Create and push tag
@@ -117,3 +123,5 @@ jobs:
           git push origin $TAG_NAME
           
           echo "✅ Tag $TAG_NAME created and pushed successfully!"
+          echo "::notice title=Deployment Complete::🎉 Successfully deployed honopang@$VERSION to NPM!"
+          echo "::notice title=Package URL::📦 https://www.npmjs.com/package/honopang/v/$VERSION"
