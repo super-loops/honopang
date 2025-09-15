@@ -29,7 +29,7 @@ type CreateTraceProps = {
   /** 로그를 저장할 NocoDB 테이블 ID */
   tableId: string;
   /** 로그 엔트리를 구분하는 주제/태그 */
-  topic: string;
+  topic?: string;
   /** 로그 시간대 설정 (기본값: "Asia/Seoul") */
   timezone?: string;
 }
