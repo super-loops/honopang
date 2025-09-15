@@ -1,4 +1,4 @@
-# Honopang (on Railway Functions) 🚀
+# Honopang (on Railway Functions) 🚂
 
 A utility library for Bun functions on Railway.
 
@@ -42,6 +42,8 @@ import { StatusError } from "honopang";
 A custom error class that handles HTTP status codes.
 
 ```typescript
+import { StatusError } from "honopang";
+
 throw new StatusError("Not Found", 404);
 throw new StatusError(404); // Automatically generates "Not Found" message
 
@@ -65,7 +67,29 @@ try {
 ```
 
 ### parseParams
-Automatically parses parameters from various formats.
+Automatically parses parameters from various formats including query strings, form data, and JSON.
+
+```typescript
+import { parseParams } from "honopang";
+
+app.post("/users", async (c) => {
+  // Parse all parameters
+  const params = await parseParams(c);
+  
+  // Validate required fields
+  const params = await parseParams(c, {
+    requires: ["name", "email"]
+  });
+  
+  // Select specific fields only
+  const params = await parseParams(c, {
+    selects: ["name", "email", "age"],
+    requires: ["name", "email"]
+  });
+  
+  return c.json({ success: true, data: params });
+});
+```
 
 ```typescript
 import { parseParams } from "honopang";

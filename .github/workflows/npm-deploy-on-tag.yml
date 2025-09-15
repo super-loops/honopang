@@ -43,7 +43,17 @@ jobs:
           ls -la .
 
       - name: Setup npm authentication
-        run: |
+        run: | #shell
+          # Check npm authentication
+          echo "🔍 Checking environment variables..."
+          echo "NPM_REGISTRY_URL: ${{ env.NPM_REGISTRY_URL }}"
+          if [ -z "${{ env.NPM_AUTH_TOKEN }}" ]; then
+            echo "❌ Error: NPM_AUTH_TOKEN is not set"
+            exit 1
+          else
+            echo "✅ NPM_AUTH_TOKEN is set"
+          fi
+          # Setup npm authentication
           echo "registry=${{ env.NPM_REGISTRY_URL }}" >> ~/.npmrc
           echo "//registry.npmjs.org/:_authToken=${{ env.NPM_AUTH_TOKEN }}" >> ~/.npmrc
 
