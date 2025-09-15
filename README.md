@@ -163,7 +163,7 @@ app.get("/users", async (c) => {
 });
 
 // Clone configuration
-const adminLogger = logger.clone({ topic: "admin-api" });
+const adminLogger = logger.cloneWith({ topic: "admin-api" });
 ```
 
 #### Recommended NocoDB Table Structure for createTraceLoggerOnNocoDB

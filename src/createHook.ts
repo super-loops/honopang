@@ -51,13 +51,13 @@ type TraceUtils = {
 };
 
 /**
- * 레이스 로거 함수 타입 - 실행 함수와 clone 메서드를 포함
+ * 트레이스 로거 함수 타입 - 실행 함수와 cloneWith 메서드를 포함
  */
 type TraceProc = {
   /** 주어진 함수를 실행하고 결과를 로깅합니다 */
-  (race: (utils: TraceUtils) => any): Promise<any>;
+  (trace: (utils: TraceUtils) => any): Promise<any>;
   /** 기존 설정을 기반으로 새로운 로거를 생성합니다 */
-  clone: (overrides: Partial<CreateTraceProps>) => TraceProc;
+  cloneWith: (overrides: Partial<CreateTraceProps>) => TraceProc;
 };
 
 /* USAGE
@@ -74,10 +74,10 @@ type TraceProc = {
   })
 
   // clone을 사용하여 새로운 topic으로 복제
-  const redNocoLogger = nocoLogger.clone({ topic: "red-topic" });
+  const redNocoLogger = nocoLogger.cloneWith({ topic: "red-topic" });
   
   // 또는 여러 설정을 한번에 변경
-  const yellowNocoLogger = nocoLogger.clone({ 
+  const yellowNocoLogger = nocoLogger.cloneWith({
     topic: "yellow-topic",
     tableId: "yellow-table-id"
   });
@@ -130,7 +130,7 @@ type TraceProc = {
  * @param config.topic - 로그 엔트리를 구분하는 주제/태그
  * @param config.timezone - 로그 시간대 설정 (기본값: "Asia/Seoul")
  * 
- * @returns TraceProc - 실행 가능한 로거 함수와 clone 메서드를 포함한 객체
+ * @returns TraceProc - 실행 가능한 로거 함수와 cloneWith 메서드를 포함한 객체
  * 
  * @example
  * ```typescript
@@ -171,7 +171,7 @@ type TraceProc = {
  * });
  * 
  * // 다른 설정으로 복제
- * const adminLogger = logger.clone({ 
+ * const adminLogger = logger.cloneWith({ 
  *   topic: "admin-api", 
  *   timezone: "America/New_York" 
  * });
@@ -180,7 +180,7 @@ type TraceProc = {
  * @remarks
  * - 로깅 실패는 메인 로직을 중단시키지 않습니다
  * - 기본 시간대는 Asia/Seoul이며, timezone 옵션으로 변경 가능합니다
- * - NocoDB API 엔드포인트는 `/v1/race/{tableId}` 형식을 사용합니다
+ * - NocoDB API 엔드포인트는 `/api/v2/tables/{tableId}/records` 형식을 사용합니다
  */
 export function createTraceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, timezone = "UTC" }: CreateTraceProps): TraceProc {
   const nocoDbHostUrl: string = baseUrl;
@@ -188,8 +188,8 @@ export function createTraceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, ti
   const recordTopic: string = topic || "undefined";
   const logTimezone: string = timezone;
 
-  const raceLogger = async function (race: (utils: TraceUtils) => any) {
-    const raceLog: TraceLog = {
+  const traceLogger = async function (trace: (utils: TraceUtils) => any) {
+    const traceLog: TraceLog = {
       topic: recordTopic,
       begin_at: Date.now(),
       duration: null,
@@ -201,21 +201,21 @@ export function createTraceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, ti
     const utils: TraceUtils = {
       stdout(...texts) {
         const textContent = texts.map((c) => String(c)).join(" ");
-        raceLog.stdout.push(textContent);
+        traceLog.stdout.push(textContent);
       },
       stderr(...texts) {
         const textContent = texts.map((c) => String(c)).join(" ");
-        raceLog.stderr.push(textContent);
+        traceLog.stderr.push(textContent);
       },
       assignDetail(setObject) {
-        Object.assign(raceLog.detail, setObject);
-        return { ...raceLog.detail };
+        Object.assign(traceLog.detail, setObject);
+        return { ...traceLog.detail };
       },
       get ms() {
-        return `${Date.now() - raceLog.begin_at}`;
+        return `${Date.now() - traceLog.begin_at}`;
       },
       formatMs(unit = "ms") {
-        const ms = Date.now() - raceLog.begin_at;
+        const ms = Date.now() - traceLog.begin_at;
         switch (unit) {
           case "ms":
             return `${ms} ms`;
@@ -235,17 +235,17 @@ export function createTraceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, ti
     async function sendTraceLog() {
       try {
         // 전체 데이터 전송 (UTC 시간으로 표준화하여 전송)
-        const beginDateTime = DateTime.fromMillis(raceLog.begin_at, {
-          zone: "UTC",
+        const beginDateTime = DateTime.fromMillis(traceLog.begin_at, {
+          zone: logTimezone,
         });
         const formattedTime = beginDateTime.toFormat("yyyy-MM-dd HH:mm:ss")
         const sendData = {
-          topic: raceLog.topic,
+          topic: traceLog.topic,
           begin_at: formattedTime,
-          duration: Date.now() - raceLog.begin_at,
-          detail: raceLog.detail,
-          stdout: raceLog.stdout.join("\n"),
-          stderr: raceLog.stderr.join("\n"),
+          duration: Date.now() - traceLog.begin_at,
+          detail: traceLog.detail,
+          stdout: traceLog.stdout.join("\n"),
+          stderr: traceLog.stderr.join("\n"),
         };
 
         const postUrl = new URL(`/api/v2/tables/${nocoDbTableId}/records`, nocoDbHostUrl);
@@ -278,7 +278,7 @@ export function createTraceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, ti
     }
 
     try {
-      const result = await race(utils);
+      const result = await trace(utils);
       sendTraceLog();
       return result;
     } catch (error: any) {
@@ -292,7 +292,7 @@ export function createTraceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, ti
   };
 
   // clone 메서드 추가
-  raceLogger.clone = (overrides: Partial<CreateTraceProps>): TraceProc => {
+  traceLogger.cloneWith = (overrides: Partial<CreateTraceProps>): TraceProc => {
     return createTraceLoggerOnNocoDB({
       xcToken: overrides.xcToken || xcToken,
       baseUrl: overrides.baseUrl || baseUrl,
@@ -302,6 +302,6 @@ export function createTraceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, ti
     });
   };
 
-  return raceLogger;
+  return traceLogger;
 }
 
