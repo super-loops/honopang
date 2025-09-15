@@ -62,10 +62,10 @@ type TraceProc = {
 
 /* USAGE
   // Railway 배포 시 /opt/honopang에 설치될 예정
-  // 로컬 개발: import { StatusError, responseOfError } from "./relative/path"
-  // 프로덕션: import { StatusError, responseOfError } from "/opt/honopang"
-  // 또는 npm 패키지로: import { StatusError, responseOfError } from "honopang"
-  import { StatusError, responseOfError } from "/opt/honopang"
+  // 로컬 개발: import { StatusError, responseJsonError } from "./relative/path"
+  // 프로덕션: import { StatusError, responseJsonError } from "/opt/honopang"
+  // 또는 npm 패키지로: import { StatusError, responseJsonError } from "honopang"
+  import { StatusError, responseJsonError } from "/opt/honopang"
 
   const nocoLogger = createTraceLoggerOnNocoDB({ 
     baseUrl: "https://your-nocodb-url", 
@@ -101,7 +101,7 @@ type TraceProc = {
         throw new StatusError("Test error logging", 500);
       });
     } catch (error) {
-      return responseOfError(c, error);
+      return responseJsonError(c, error);
     }
   });
 
@@ -112,7 +112,7 @@ type TraceProc = {
       // ... your code ...
       throw new StatusError("Test error logging", 500);
     }).catch((error)=>{
-      return responseOfError(c, error);
+      return responseJsonError(c, error);
     });
   });
 */

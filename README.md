@@ -93,15 +93,15 @@ try {
 }
 ```
 
-### responseOfError
-Handles errors and returns standardized error responses.
+### responseJsonError
+Handles errors and returns standardized JSON error responses.
 
 ```typescript
 app.get("/user/foo", (c) => {
   try {
     throw new Error("Foo Error")
   } catch (error) {
-    return responseOfError(c, error);
+    return responseJsonError(c, error);
   }
 });
 
@@ -109,7 +109,80 @@ app.get("/user/bar", (c) => {
   try {
     throw new StatusError("Bar Error", 501)
   } catch (error) {
-    return responseOfError(c, error);
+    return responseJsonError(c, error);
+  }
+});
+```
+
+### responseTextError
+Handles errors and returns plain text error responses.
+
+```typescript
+import { responseTextError } from "honopang";
+
+app.get("/api/status", (c) => {
+  try {
+    throw new StatusError("Service Unavailable", 503);
+  } catch (error) {
+    return responseTextError(c, error);
+    // Returns: "Error: Service Unavailable" with status 503
+  }
+});
+
+app.get("/api/health", (c) => {
+  try {
+    throw new Error("Database connection failed");
+  } catch (error) {
+    return responseTextError(c, error); // verbose=false
+    // Returns: "Error: Database connection failed" with status 500
+  }
+});
+```
+
+### responseTemplateError
+Handles errors and returns HTML responses with customizable templates.
+
+```typescript
+import { responseTemplateError } from "honopang";
+import { type FC } from 'hono/jsx';
+
+// JSX component template
+const ErrorPage: FC<{ error: Error | StatusError }> = ({ error }) => (
+  <html>
+    <head><title>Error</title></head>
+    <body>
+      <h1>Oops! Something went wrong</h1>
+      <p>{error.message}</p>
+      <small>Status: {'status' in error ? error.status : 500}</small>
+    </body>
+  </html>
+);
+
+app.get("/page/user", (c) => {
+  try {
+    throw new StatusError("User Not Found", 404);
+  } catch (error) {
+    return responseTemplateError(c, error, ErrorPage);
+  }
+});
+
+// String template
+app.get("/page/admin", (c) => {
+  try {
+    throw new StatusError("Access Denied", 403);
+  } catch (error) {
+    const template = `<html><body><h1>Access Denied</h1><p>${error.message}</p></body></html>`;
+    return responseTemplateError(c, error, template);
+  }
+});
+
+// Default template (no template provided)
+app.get("/page/api", (c) => {
+  try {
+    throw new Error("API Error");
+  } catch (error) {
+    return responseTemplateError(c, error);
+    // Returns: "<h1>Error</h1><p>API Error</p>" with status 500
   }
 });
 ```

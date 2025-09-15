@@ -1,6 +1,6 @@
 import { type Handler, type Context } from "hono";
 import { StatusError } from "./common";
-import { responseOfError } from "./contextResponse";
+import { responseJsonError } from "./contextResponse";
 
 /* USAGE
 
@@ -65,7 +65,7 @@ export function createNextHandlerIfAuthorization(validateToken: (token: string) 
         throw error;
       }
     } catch (error) {
-      return responseOfError(c, error as (Error | StatusError), false);
+      return responseJsonError(c, error as (Error | StatusError), false);
     }
   }
 }
