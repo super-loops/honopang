@@ -55,8 +55,14 @@ export class StatusError extends Error {
     }
     super(message);
     this.status = status;
+    this.name = 'StatusError'; // 에러 이름 설정
 
     // ↓ Error 를 상속할 때 하위 클래스의 prototype 체인을 맞춰주는 관용구
     Object.setPrototypeOf(this, new.target.prototype);
+
+    // Stack trace에 올바른 클래스 이름이 표시되도록 설정
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, StatusError);
+    }
   }
 }
