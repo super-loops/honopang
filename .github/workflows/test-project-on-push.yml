@@ -1,4 +1,4 @@
-name: Deploy Bun Package on CI
+name: Test Bun Package on CI
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-          
+
       - name: Install dependencies
         run: |
           bun install
