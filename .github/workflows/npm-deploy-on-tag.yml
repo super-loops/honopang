@@ -1,4 +1,4 @@
-name: Deploy NPM Package and Create Tag
+name: 02. Deploy NPM Package and Create Tag
 
 permissions:
   contents: write  # 태그 푸시를 위해 write 권한 필요
@@ -13,7 +13,7 @@ env:
 
 jobs:
   test_and_deploy:
-    name: 02. Test and Deploy Bun Package
+    name: Test and Deploy Bun Package
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

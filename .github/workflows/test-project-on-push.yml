@@ -1,4 +1,4 @@
-name: Test Bun Package before Deploy
+name: 01. Test Bun Package before Deploy
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   test_package:
-    name: 01. Test before deploy bun package
+    name: Test before deploy bun package
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
