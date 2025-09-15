@@ -178,8 +178,3 @@ Create a NocoDB table with the following field structure to use Trace Logger:
 | `detail` | **JSON** | Optional | Detailed information object | `{"userCount": 42, "status": "success"}` |
 | `stdout` | **LongText** | Optional | Standard output logs (separated by newlines) | `"Starting process...\nProcessing data...\nCompleted"` |
 | `stderr` | **LongText** | Optional | Error logs (separated by newlines) | `"Warning: deprecated API\nError: connection timeout"` |
-
-
-## 📝 License
-
-This project contains no special technical innovations. Copying and modification of the code is free until explicitly stated otherwise in a specific version. However, using the project name to damage the reputation of the author or project is prohibited. The author assumes no responsibility for any issues arising from the use of this code.

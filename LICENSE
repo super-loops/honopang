@@ -1,0 +1,18 @@
+License
+
+Copying and modification of the code is free until explicitly stated otherwise in a specific version. However, using the project name to damage the reputation of the author or project is prohibited. The author assumes no responsibility for any issues arising from the use of this code.
+
+## Third-Party Licenses
+
+This project uses the following third-party libraries:
+
+### Hono
+- License: MIT License
+- Copyright (c) 2021 Yusuke Wada
+- Repository: https://github.com/honojs/hono
+
+### Luxon
+- License: MIT License  
+- Copyright (c) 2017 JS Foundation and other contributors
+- Repository: https://github.com/moment/luxon
+

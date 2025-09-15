@@ -1,11 +1,12 @@
 {
   "name": "honopang",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Supports necessary functions for Bun and Hono in railway functions.",
   "author": {
     "name": "AHN HO JUNG",
     "email": "labeldock@me.com"
   },
+  "license": "SEE LICENSE IN LICENSE",
   "module": "src/index.ts",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
