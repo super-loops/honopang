@@ -12,6 +12,7 @@
         "@types/luxon": "^3",
         "hono": "^4",
         "luxon": "^3",
+        "typescript": "^5",
       },
       "peerDependencies": {
         "typescript": "^5",
