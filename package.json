@@ -1,6 +1,6 @@
 {
   "name": "honopang",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "description": "Supports necessary functions for Bun and Hono in railway functions.",
   "author": {
     "name": "AHN HO JUNG",
@@ -15,15 +15,19 @@
     "README.md"
   ],
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build": "bun build src/index.ts --outdir dist --target bun --external hono --external luxon",
     "test": "bun test",
     "test:watch": "bun test --watch"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/luxon": "^3.7.1",
-    "hono": "^4.9.7",
-    "luxon": "^3.7.2"
+    "@types/luxon": "^3",
+    "hono": "^4",
+    "luxon": "^3"
+  },
+  "dependencies": {
+    "hono": "^4",
+    "luxon": "^3"
   },
   "peerDependencies": {
     "typescript": "^5"
