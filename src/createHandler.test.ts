@@ -4,10 +4,24 @@ import { StatusError } from "./common";
 
 // Hono Context와 next 함수 모킹
 function createMockContext(headers: Record<string, string> = {}) {
+  let responseData: any = null;
+  let responseStatus: number = 200;
+
   return {
     req: {
       header: (key: string) => headers[key.toLowerCase()] || headers[key]
-    }
+    },
+    json: (data: any, status?: number) => {
+      responseData = data;
+      if (status) responseStatus = status;
+      return {
+        status: responseStatus,
+        data: responseData,
+        headers: new Headers({ 'content-type': 'application/json' })
+      };
+    },
+    getResponseData: () => responseData,
+    getResponseStatus: () => responseStatus
   } as any;
 }
 
@@ -15,6 +29,7 @@ function createMockNext() {
   let called = false;
   const nextFn = () => {
     called = true;
+    return Promise.resolve(); // next()는 Promise<void>를 반환
   };
   nextFn.wasCalled = () => called;
   return nextFn as any;
@@ -22,28 +37,21 @@ function createMockNext() {
 
 describe("createNextHandlerIfAuthorization", () => {
   describe("Authorization 헤더 검증", () => {
-    test("Authorization 헤더가 없으면 403 에러 발생", async () => {
+    test("Authorization 헤더가 없으면 403 에러 응답", async () => {
       const validateToken = async (token: string) => true;
       const handler = createNextHandlerIfAuthorization(validateToken);
       const context = createMockContext({});
       const next = createMockNext();
 
-      await expect(handler(context, next)).rejects.toThrow(StatusError);
-      await expect(handler(context, next)).rejects.toThrow("Authorization required");
+      const result = await handler(context, next);
 
-      try {
-        await handler(context, next);
-      } catch (error) {
-        expect(error).toBeInstanceOf(StatusError);
-        if (error instanceof StatusError) {
-          expect(error.status).toBe(403);
-        }
-      }
-
+      expect(result).toBeDefined();
+      expect(context.getResponseStatus()).toBe(403);
+      expect(context.getResponseData()).toEqual({ error: "Authorization required" });
       expect(next.wasCalled()).toBe(false);
     });
 
-    test("Bearer 토큰이 아닌 경우 401 에러 발생", async () => {
+    test("Bearer 토큰이 아닌 경우 401 에러 응답", async () => {
       const validateToken = async (token: string) => true;
       const handler = createNextHandlerIfAuthorization(validateToken);
       const context = createMockContext({
@@ -51,22 +59,15 @@ describe("createNextHandlerIfAuthorization", () => {
       });
       const next = createMockNext();
 
-      await expect(handler(context, next)).rejects.toThrow(StatusError);
-      await expect(handler(context, next)).rejects.toThrow("Authorization format invaild");
+      const result = await handler(context, next);
 
-      try {
-        await handler(context, next);
-      } catch (error) {
-        expect(error).toBeInstanceOf(StatusError);
-        if (error instanceof StatusError) {
-          expect(error.status).toBe(401);
-        }
-      }
-
+      expect(result).toBeDefined();
+      expect(context.getResponseStatus()).toBe(401);
+      expect(context.getResponseData()).toEqual({ error: "Authorization format invaild" });
       expect(next.wasCalled()).toBe(false);
     });
 
-    test("빈 Authorization 헤더인 경우 403 에러 발생", async () => {
+    test("빈 Authorization 헤더인 경우 403 에러 응답", async () => {
       const validateToken = async (token: string) => true;
       const handler = createNextHandlerIfAuthorization(validateToken);
       const context = createMockContext({
@@ -74,18 +75,11 @@ describe("createNextHandlerIfAuthorization", () => {
       });
       const next = createMockNext();
 
-      await expect(handler(context, next)).rejects.toThrow(StatusError);
-      await expect(handler(context, next)).rejects.toThrow("Authorization required");
+      const result = await handler(context, next);
 
-      try {
-        await handler(context, next);
-      } catch (error) {
-        expect(error).toBeInstanceOf(StatusError);
-        if (error instanceof StatusError) {
-          expect(error.status).toBe(403);
-        }
-      }
-
+      expect(result).toBeDefined();
+      expect(context.getResponseStatus()).toBe(403);
+      expect(context.getResponseData()).toEqual({ error: "Authorization required" });
       expect(next.wasCalled()).toBe(false);
     });
   });
@@ -103,10 +97,11 @@ describe("createNextHandlerIfAuthorization", () => {
       });
       const next = createMockNext();
 
-      await handler(context, next);
+      const result = await handler(context, next);
 
       expect(receivedToken).toBe("abc123def456");
       expect(next.wasCalled()).toBe(true);
+      expect(result).toBeUndefined(); // next()가 호출되면 void 반환
     });
 
     test("Bearer 키워드만 있고 토큰이 없는 경우", async () => {
@@ -124,10 +119,11 @@ describe("createNextHandlerIfAuthorization", () => {
       };
       const mockHandler = createNextHandlerIfAuthorization(mockValidateToken);
 
-      await mockHandler(context, next);
+      const result = await mockHandler(context, next);
 
       expect(receivedToken).toBe("");
       expect(next.wasCalled()).toBe(true);
+      expect(result).toBeUndefined(); // next()가 호출되면 void 반환
     });
 
     test("대소문자 구분 없이 Authorization 헤더 처리", async () => {
@@ -142,10 +138,11 @@ describe("createNextHandlerIfAuthorization", () => {
       });
       const next = createMockNext();
 
-      await handler(context, next);
+      const result = await handler(context, next);
 
       expect(receivedToken).toBe("xyz789");
       expect(next.wasCalled()).toBe(true);
+      expect(result).toBeUndefined(); // next()가 호출되면 void 반환
     });
   });
 
@@ -158,12 +155,13 @@ describe("createNextHandlerIfAuthorization", () => {
       });
       const next = createMockNext();
 
-      await handler(context, next);
+      const result = await handler(context, next);
 
       expect(next.wasCalled()).toBe(true);
+      expect(result).toBeUndefined(); // next()가 호출되면 void 반환
     });
 
-    test("validateToken이 false를 반환하면 401 에러 발생", async () => {
+    test("validateToken이 false를 반환하면 401 에러 응답", async () => {
       const validateToken = async (token: string) => false;
       const handler = createNextHandlerIfAuthorization(validateToken);
       const context = createMockContext({
@@ -171,23 +169,20 @@ describe("createNextHandlerIfAuthorization", () => {
       });
       const next = createMockNext();
 
-      // catch 블록에 의해 500 에러로 변환됨
-      await expect(handler(context, next)).rejects.toThrow(StatusError);
+      const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
 
-      try {
-        await handler(context, next);
-      } catch (error) {
-        expect(error).toBeInstanceOf(StatusError);
-        if (error instanceof StatusError) {
-          expect(error.status).toBe(500); // catch 블록에서 500으로 변환
-          expect(error.message).toBe("Internal Server Error");
-        }
-      }
+      const result = await handler(context, next);
 
+      expect(result).toBeDefined();
+      expect(context.getResponseStatus()).toBe(500); // catch 블록에서 500으로 변환
+      expect(context.getResponseData()).toEqual({ error: "Internal Server Error" });
       expect(next.wasCalled()).toBe(false);
+      expect(consoleSpy).toHaveBeenCalledWith("Error occurred during authorization:", expect.any(StatusError));
+
+      consoleSpy.mockRestore();
     });
 
-    test("validateToken이 StatusError를 반환하면 해당 에러 발생", async () => {
+    test("validateToken이 StatusError를 반환하면 500 에러 응답", async () => {
       const customError = new StatusError("Token expired", 401);
       const validateToken = async (token: string) => customError;
       const handler = createNextHandlerIfAuthorization(validateToken);
@@ -196,23 +191,20 @@ describe("createNextHandlerIfAuthorization", () => {
       });
       const next = createMockNext();
 
-      // catch 블록에 의해 500 에러로 변환됨
-      await expect(handler(context, next)).rejects.toThrow(StatusError);
+      const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
 
-      try {
-        await handler(context, next);
-      } catch (error) {
-        expect(error).toBeInstanceOf(StatusError);
-        if (error instanceof StatusError) {
-          expect(error.status).toBe(500); // catch 블록에서 500으로 변환
-          expect(error.message).toBe("Internal Server Error");
-        }
-      }
+      const result = await handler(context, next);
 
+      expect(result).toBeDefined();
+      expect(context.getResponseStatus()).toBe(500); // catch 블록에서 500으로 변환
+      expect(context.getResponseData()).toEqual({ error: "Internal Server Error" });
       expect(next.wasCalled()).toBe(false);
+      expect(consoleSpy).toHaveBeenCalledWith("Error occurred during authorization:", expect.any(StatusError));
+
+      consoleSpy.mockRestore();
     });
 
-    test("validateToken이 예상치 못한 값을 반환하면 500 에러 발생", async () => {
+    test("validateToken이 예상치 못한 값을 반환하면 500 에러 응답", async () => {
       const validateToken = async (token: string) => "unexpected" as any;
       const handler = createNextHandlerIfAuthorization(validateToken);
       const context = createMockContext({
@@ -222,27 +214,21 @@ describe("createNextHandlerIfAuthorization", () => {
 
       const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
 
-      await expect(handler(context, next)).rejects.toThrow(StatusError);
+      const result = await handler(context, next);
 
-      try {
-        await handler(context, next);
-      } catch (error) {
-        expect(error).toBeInstanceOf(StatusError);
-        if (error instanceof StatusError) {
-          expect(error.status).toBe(500);
-          expect(error.message).toBe("Internal Server Error");
-        }
-      }
-
+      expect(result).toBeDefined();
+      expect(context.getResponseStatus()).toBe(500);
+      expect(context.getResponseData()).toEqual({ error: "Internal Server Error" }); // catch 블록에서 일반적인 메시지로 변환
       expect(next.wasCalled()).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith("Unexpected authorization process:", "unexpected");
+      expect(consoleSpy).toHaveBeenCalledWith("Error occurred during authorization:", expect.any(StatusError));
 
       consoleSpy.mockRestore();
     });
   });
 
   describe("에러 처리", () => {
-    test("validateToken이 예외를 던지면 500 에러 발생", async () => {
+    test("validateToken이 예외를 던지면 500 에러 응답", async () => {
       const validateToken = async (token: string) => {
         throw new Error("Database connection failed");
       };
@@ -254,18 +240,11 @@ describe("createNextHandlerIfAuthorization", () => {
 
       const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
 
-      await expect(handler(context, next)).rejects.toThrow(StatusError);
+      const result = await handler(context, next);
 
-      try {
-        await handler(context, next);
-      } catch (error) {
-        expect(error).toBeInstanceOf(StatusError);
-        if (error instanceof StatusError) {
-          expect(error.status).toBe(500);
-          expect(error.message).toBe("Internal Server Error");
-        }
-      }
-
+      expect(result).toBeDefined();
+      expect(context.getResponseStatus()).toBe(500);
+      expect(context.getResponseData()).toEqual({ error: "Internal Server Error" });
       expect(next.wasCalled()).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith("Error occurred during authorization:", expect.any(Error));
 
@@ -284,18 +263,11 @@ describe("createNextHandlerIfAuthorization", () => {
 
       const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
 
-      await expect(handler(context, next)).rejects.toThrow(StatusError);
+      const result = await handler(context, next);
 
-      try {
-        await handler(context, next);
-      } catch (error) {
-        expect(error).toBeInstanceOf(StatusError);
-        if (error instanceof StatusError) {
-          expect(error.status).toBe(500);
-          expect(error.message).toBe("Internal Server Error");
-        }
-      }
-
+      expect(result).toBeDefined();
+      expect(context.getResponseStatus()).toBe(500);
+      expect(context.getResponseData()).toEqual({ error: "Internal Server Error" });
       expect(next.wasCalled()).toBe(false);
       expect(consoleSpy).toHaveBeenCalled();
 
@@ -317,8 +289,9 @@ describe("createNextHandlerIfAuthorization", () => {
       });
       const validNext = createMockNext();
 
-      await handler(validContext, validNext);
+      const validResult = await handler(validContext, validNext);
       expect(validNext.wasCalled()).toBe(true);
+      expect(validResult).toBeUndefined(); // next()가 호출되면 void 반환
 
       // 무효한 토큰
       const invalidContext = createMockContext({
@@ -326,8 +299,15 @@ describe("createNextHandlerIfAuthorization", () => {
       });
       const invalidNext = createMockNext();
 
-      await expect(handler(invalidContext, invalidNext)).rejects.toThrow(StatusError);
+      const consoleSpy = spyOn(console, "error").mockImplementation(() => { });
+
+      const invalidResult = await handler(invalidContext, invalidNext);
+      expect(invalidResult).toBeDefined();
+      expect(invalidContext.getResponseStatus()).toBe(500); // catch 블록에서 500으로 변환
+      expect(invalidContext.getResponseData()).toEqual({ error: "Internal Server Error" });
       expect(invalidNext.wasCalled()).toBe(false);
+
+      consoleSpy.mockRestore();
     });
 
     test("외부 API 연동 시뮬레이션", async () => {
@@ -349,8 +329,9 @@ describe("createNextHandlerIfAuthorization", () => {
       });
       const validNext = createMockNext();
 
-      await handler(validContext, validNext);
+      const validResult = await handler(validContext, validNext);
       expect(validNext.wasCalled()).toBe(true);
+      expect(validResult).toBeUndefined(); // next()가 호출되면 void 반환
 
       // 만료된 토큰
       const expiredContext = createMockContext({
@@ -358,19 +339,15 @@ describe("createNextHandlerIfAuthorization", () => {
       });
       const expiredNext = createMockNext();
 
-      // 만료된 토큰 - catch 블록에 의해 500 에러로 변환
-      await expect(handler(expiredContext, expiredNext)).rejects.toThrow(StatusError);
+      const consoleSpy1 = spyOn(console, "error").mockImplementation(() => { });
 
-      try {
-        await handler(expiredContext, expiredNext);
-      } catch (error) {
-        expect(error).toBeInstanceOf(StatusError);
-        if (error instanceof StatusError) {
-          expect(error.status).toBe(500); // catch 블록에서 500으로 변환
-          expect(error.message).toBe("Internal Server Error");
-        }
-      }
+      const expiredResult = await handler(expiredContext, expiredNext);
+      expect(expiredResult).toBeDefined();
+      expect(expiredContext.getResponseStatus()).toBe(500); // catch 블록에서 500으로 변환
+      expect(expiredContext.getResponseData()).toEqual({ error: "Internal Server Error" });
       expect(expiredNext.wasCalled()).toBe(false);
+
+      consoleSpy1.mockRestore();
 
       // 무효한 토큰
       const invalidContext = createMockContext({
@@ -378,17 +355,15 @@ describe("createNextHandlerIfAuthorization", () => {
       });
       const invalidNext = createMockNext();
 
-      // 무효한 토큰 - catch 블록에 의해 500 에러로 변환
-      try {
-        await handler(invalidContext, invalidNext);
-      } catch (error) {
-        expect(error).toBeInstanceOf(StatusError);
-        if (error instanceof StatusError) {
-          expect(error.status).toBe(500); // catch 블록에서 500으로 변환
-          expect(error.message).toBe("Internal Server Error");
-        }
-      }
+      const consoleSpy2 = spyOn(console, "error").mockImplementation(() => { });
+
+      const invalidResult = await handler(invalidContext, invalidNext);
+      expect(invalidResult).toBeDefined();
+      expect(invalidContext.getResponseStatus()).toBe(500); // catch 블록에서 500으로 변환
+      expect(invalidContext.getResponseData()).toEqual({ error: "Internal Server Error" });
       expect(invalidNext.wasCalled()).toBe(false);
+
+      consoleSpy2.mockRestore();
     });
   });
 });
