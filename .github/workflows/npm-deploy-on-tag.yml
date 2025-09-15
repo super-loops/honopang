@@ -1,6 +1,6 @@
 name: 02. Deploy NPM Package and Create Tag
 
-run-name: "🚀 Deploy honopang (${{ github.sha }}) by @${{ github.actor }}"
+run-name: "🚀 Deploy honopang (${{ inputs.commit_sha || github.sha }}) by @${{ github.actor }}"
 
 permissions:
   contents: write  # 태그 푸시를 위해 write 권한 필요
@@ -8,6 +8,12 @@ permissions:
 
 on:
   workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: 'Specific commit SHA to deploy (optional, defaults to latest)'
+        required: false
+        type: string
+        default: ''
 
 env:
   NPM_REGISTRY_URL: https://registry.npmjs.org/
@@ -20,6 +26,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha || github.sha }}
+          
+      - name: Display deployment info
+        run: |
+          DEPLOY_SHA="${{ inputs.commit_sha || github.sha }}"
+          SHORT_SHA="${DEPLOY_SHA:0:7}"
+          echo "🚀 Deploying commit: $SHORT_SHA"
+          echo "📋 Full SHA: $DEPLOY_SHA"
+          echo "👤 Triggered by: ${{ github.actor }}"
+          echo "::notice title=Deployment Target::Deploying commit $SHORT_SHA"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
