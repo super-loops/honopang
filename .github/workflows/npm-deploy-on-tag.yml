@@ -9,12 +9,12 @@ on:
 
 env:
   NPM_REGISTRY_URL: https://registry.npmjs.org/
-  NPM_AUTH_TOKEN: ${{ secrets.RAILWAY_SUPPORTS_NPM_TOKEN_W1 }}
 
 jobs:
   test_and_deploy:
     name: Test and Deploy Bun Package
     runs-on: ubuntu-latest
+    environment: RAILWAY_SUPPORTS
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,7 +47,7 @@ jobs:
           # Check npm authentication
           echo "🔍 Checking environment variables..."
           echo "NPM_REGISTRY_URL: ${{ env.NPM_REGISTRY_URL }}"
-          if [ -z "${{ env.NPM_AUTH_TOKEN }}" ]; then
+          if [ -z "${{ secrets.RAILWAY_SUPPORTS_NPM_TOKEN_W1 }}" ]; then
             echo "❌ Error: NPM_AUTH_TOKEN is not set"
             exit 1
           else
@@ -55,7 +55,7 @@ jobs:
           fi
           # Setup npm authentication
           echo "registry=${{ env.NPM_REGISTRY_URL }}" >> ~/.npmrc
-          echo "//registry.npmjs.org/:_authToken=${{ env.NPM_AUTH_TOKEN }}" >> ~/.npmrc
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.RAILWAY_SUPPORTS_NPM_TOKEN_W1 }}" >> ~/.npmrc
 
       - name: Publish to NPM registry
         id: npm_publish
