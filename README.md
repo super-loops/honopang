@@ -274,3 +274,29 @@ Create a NocoDB table with the following field structure to use Trace Logger:
 | `detail` | **JSON** | Optional | Detailed information object | `{"userCount": 42, "status": "success"}` |
 | `stdout` | **LongText** | Optional | Standard output logs (separated by newlines) | `"Starting process...\nProcessing data...\nCompleted"` |
 | `stderr` | **LongText** | Optional | Error logs (separated by newlines) | `"Warning: deprecated API\nError: connection timeout"` |
+
+
+### buildUrl
+
+Builds a complete URL from base URL, path, query parameters, and fragment.
+
+```typescript
+import { buildUrl } from "honopang";
+const url:URL = buildUrl("https://api.example.com", "/users", { page: 2, limit: 20 });
+const urlString:string = url.toString();
+// Result: "https://api.example.com/users?page=2&limit=20"
+fetch(url); // or fetch(urlString);
+```
+
+### begin
+
+A helper function primarily used when declaring const variables in multiline format.
+
+```typescript
+import { begin } from "honopang";
+const config = begin(()=>{
+  const port = parseInt(process.env.PORT || "3000", 10);
+  const schema = port === 443 ? "https" : "http";
+  return { port, schema };
+})
+```

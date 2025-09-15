@@ -16,3 +16,7 @@ This project uses the following third-party libraries:
 - Copyright (c) 2019 JS Foundation and other contributors
 - Repository: https://github.com/moment/luxon
 
+### query-string
+- License: MIT License
+- Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> 
+- Repository: https://github.com/sindresorhus/query-string
