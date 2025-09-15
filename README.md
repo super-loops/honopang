@@ -28,8 +28,8 @@ Please note that this library is specifically designed for Railway's Bun and Hon
 
 - **Request Payload Parsing**: Auto-parse and validate requests from various Content-Types
 - **Error Handling**: HTTP status error management with standardized responses
-- **Authentication**: Bearer token-based middleware for protected routes
-- **Race Logger**: Automatic API execution tracking and NocoDB logging
+- **Simple Authentication**: Bearer token-based middleware for protected routes
+- **Trace Logger**: Automatic API execution tracking and NocoDB logging
 
 ## Usage
 
@@ -38,6 +38,31 @@ import { StatusError } from "honopang";
 ```
 
 ## 📖 API Documentation
+
+### parseParams
+Automatically parses parameters from various formats including query strings, form data, and JSON.
+
+```typescript
+import { parseParams } from "honopang";
+
+app.post("/users", async (c) => {
+  // Parse all parameters
+  const params = await parseParams(c);
+  
+  // Validate required fields
+  const params = await parseParams(c, {
+    requires: ["name", "email"]
+  });
+  
+  // Select specific fields only
+  const params = await parseParams(c, {
+    selects: ["name", "email", "age"],
+    requires: ["name", "email"]
+  });
+  
+  return c.json({ success: true, data: params });
+});
+```
 
 ### StatusError
 
@@ -68,55 +93,7 @@ try {
 }
 ```
 
-### parseParams
-Automatically parses parameters from various formats including query strings, form data, and JSON.
-
-```typescript
-import { parseParams } from "honopang";
-
-app.post("/users", async (c) => {
-  // Parse all parameters
-  const params = await parseParams(c);
-  
-  // Validate required fields
-  const params = await parseParams(c, {
-    requires: ["name", "email"]
-  });
-  
-  // Select specific fields only
-  const params = await parseParams(c, {
-    selects: ["name", "email", "age"],
-    requires: ["name", "email"]
-  });
-  
-  return c.json({ success: true, data: params });
-});
-```
-
-```typescript
-import { parseParams } from "honopang";
-
-app.post("/users", async (c) => {
-  // Parse all parameters
-  const params = await parseParams(c);
-  
-  // Validate required fields
-  const params = await parseParams(c, {
-    requires: ["name", "email"]
-  });
-  
-  // Select specific fields only
-  const params = await parseParams(c, {
-    selects: ["name", "email", "age"],
-    requires: ["name", "email"]
-  });
-  
-  return c.json({ success: true, data: params });
-});
-```
-
 ### responseOfError
-
 Handles errors and returns standardized error responses.
 
 ```typescript
@@ -158,15 +135,15 @@ app.use("/user/*", authHandler);
 app.get("/user/:id", (c) => c.text("Protected content"));
 ```
 
-### createRaceLoggerOnNocoDB
+### createTraceLoggerOnNocoDB
 
-A race logger that automatically records execution logs to NocoDB.
+A trace logger that automatically records execution logs to NocoDB.
 
 ```typescript
-import { createRaceLoggerOnNocoDB } from "honopang";
+import { createTraceLoggerOnNocoDB } from "honopang";
 
 // Create basic logger
-const logger = createRaceLoggerOnNocoDB({
+const logger = createTraceLoggerOnNocoDB({
   xcToken: "nocodb-secret-token",
   baseUrl: "https://mynocodb.app.railway.app",
   tableId: "table_123",
@@ -189,9 +166,9 @@ app.get("/users", async (c) => {
 const adminLogger = logger.clone({ topic: "admin-api" });
 ```
 
-#### Recommended NocoDB Table Structure for createRaceLoggerOnNocoDB
+#### Recommended NocoDB Table Structure for createTraceLoggerOnNocoDB
 
-Create a NocoDB table with the following field structure to use Race Logger:
+Create a NocoDB table with the following field structure to use Trace Logger:
 
 | Field Name | Data Type | Required | Description | Example Value |
 |------------|-----------|----------|-------------|---------------|

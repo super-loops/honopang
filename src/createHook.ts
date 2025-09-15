@@ -4,7 +4,7 @@ import { DateTime } from "luxon";
 /**
  * NocoDB에 저장되는 레이스 로그 데이터 구조
  */
-type RaceLog = {
+type TraceLog = {
   /** 로그 주제/태그 */
   topic: string;
   /** 실행 시작 시간 (Unix timestamp) */
@@ -22,7 +22,7 @@ type RaceLog = {
 /**
  * 레이스 로거 생성을 위한 설정 속성
  */
-type CreateRaceProps = {
+type CreateTraceProps = {
   xcToken: string | (() => string | Promise<string>); // NocoDB 인증 토큰 또는 토큰을 반환하는 함수
   /** NocoDB 서버의 기본 URL */
   baseUrl: string;
@@ -37,7 +37,7 @@ type CreateRaceProps = {
 /**
  * 레이스 로깅 중에 사용할 수 있는 유틸리티 함수들
  */
-type RaceUtils = {
+type TraceUtils = {
   /** 표준 출력 메시지를 기록합니다 */
   stdout: (...texts: (string | number | boolean)[]) => void;
   /** 오류 메시지를 기록합니다 */
@@ -53,11 +53,11 @@ type RaceUtils = {
 /**
  * 레이스 로거 함수 타입 - 실행 함수와 clone 메서드를 포함
  */
-type RaceProc = {
+type TraceProc = {
   /** 주어진 함수를 실행하고 결과를 로깅합니다 */
-  (race: (utils: RaceUtils) => any): Promise<any>;
+  (race: (utils: TraceUtils) => any): Promise<any>;
   /** 기존 설정을 기반으로 새로운 로거를 생성합니다 */
-  clone: (overrides: Partial<CreateRaceProps>) => RaceProc;
+  clone: (overrides: Partial<CreateTraceProps>) => TraceProc;
 };
 
 /* USAGE
@@ -67,7 +67,7 @@ type RaceProc = {
   // 또는 npm 패키지로: import { StatusError, responseOfError } from "honopang"
   import { StatusError, responseOfError } from "/opt/honopang"
 
-  const nocoLogger = createRaceLoggerOnNocoDB({ 
+  const nocoLogger = createTraceLoggerOnNocoDB({ 
     baseUrl: "https://your-nocodb-url", 
     tableId: "your-table-id",
     topic: "your-topic"
@@ -130,12 +130,12 @@ type RaceProc = {
  * @param config.topic - 로그 엔트리를 구분하는 주제/태그
  * @param config.timezone - 로그 시간대 설정 (기본값: "Asia/Seoul")
  * 
- * @returns RaceProc - 실행 가능한 로거 함수와 clone 메서드를 포함한 객체
+ * @returns TraceProc - 실행 가능한 로거 함수와 clone 메서드를 포함한 객체
  * 
  * @example
  * ```typescript
  * // 기본 로거 생성 (Asia/Seoul 타임존)
- * const logger = createRaceLoggerOnNocoDB({
+ * const logger = createTraceLoggerOnNocoDB({
  *   xcToken: "your-nocodb-token",
  *   baseUrl: "https://nocodb.example.com",
  *   tableId: "table_123",
@@ -143,7 +143,7 @@ type RaceProc = {
  * });
  * 
  * // 토큰을 함수로 제공하는 경우
- * const dynamicLogger = createRaceLoggerOnNocoDB({
+ * const dynamicLogger = createTraceLoggerOnNocoDB({
  *   xcToken: () => process.env.NOCODB_TOKEN || "fallback-token",
  *   baseUrl: "https://nocodb.example.com",
  *   tableId: "table_123",
@@ -151,7 +151,7 @@ type RaceProc = {
  * });
  * 
  * // 다른 타임존으로 로거 생성
- * const utcLogger = createRaceLoggerOnNocoDB({
+ * const utcLogger = createTraceLoggerOnNocoDB({
  *   xcToken: "your-nocodb-token",
  *   baseUrl: "https://nocodb.example.com",
  *   tableId: "table_123", 
@@ -182,14 +182,14 @@ type RaceProc = {
  * - 기본 시간대는 Asia/Seoul이며, timezone 옵션으로 변경 가능합니다
  * - NocoDB API 엔드포인트는 `/v1/race/{tableId}` 형식을 사용합니다
  */
-export function createRaceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, timezone = "Asia/Seoul" }: CreateRaceProps): RaceProc {
+export function createTraceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, timezone = "Asia/Seoul" }: CreateTraceProps): TraceProc {
   const nocoDbHostUrl: string = baseUrl;
   const nocoDbTableId: string = tableId;
   const recordTopic: string = topic || "undefined";
   const logTimezone: string = timezone;
 
-  const raceLogger = async function (race: (utils: RaceUtils) => any) {
-    const raceLog: RaceLog = {
+  const raceLogger = async function (race: (utils: TraceUtils) => any) {
+    const raceLog: TraceLog = {
       topic: recordTopic,
       begin_at: Date.now(),
       duration: null,
@@ -198,7 +198,7 @@ export function createRaceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, tim
       stderr: [],
     };
 
-    const utils: RaceUtils = {
+    const utils: TraceUtils = {
       stdout(...texts) {
         const textContent = texts.map((c) => String(c)).join(" ");
         raceLog.stdout.push(textContent);
@@ -232,7 +232,7 @@ export function createRaceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, tim
     };
 
     // NocoDB에 로그를 남김. 이 로직은 다른 로직을 중단되게 만들면 안됨.
-    async function sendRaceLog() {
+    async function sendTraceLog() {
       try {
         // 전체 데이터 전송
         const beginDateTime = DateTime.fromMillis(raceLog.begin_at, {
@@ -271,7 +271,7 @@ export function createRaceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, tim
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         const errorStatus = error instanceof StatusError ? error.status : 500;
-        console.log(`Error RaceLoggerOnNocoDB ${errorMessage}`, errorStatus);
+        console.log(`Error TraceLoggerOnNocoDB ${errorMessage}`, errorStatus);
       } finally {
         return true;
       }
@@ -279,21 +279,21 @@ export function createRaceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, tim
 
     try {
       const result = await race(utils);
-      sendRaceLog();
+      sendTraceLog();
       return result;
     } catch (error: any) {
       utils.stderr(error.message);
       if (error.stack) {
         utils.stderr(error.stack);
       }
-      sendRaceLog();
+      sendTraceLog();
       throw error;
     }
   };
 
   // clone 메서드 추가
-  raceLogger.clone = (overrides: Partial<CreateRaceProps>): RaceProc => {
-    return createRaceLoggerOnNocoDB({
+  raceLogger.clone = (overrides: Partial<CreateTraceProps>): TraceProc => {
+    return createTraceLoggerOnNocoDB({
       xcToken: overrides.xcToken || xcToken,
       baseUrl: overrides.baseUrl || baseUrl,
       tableId: overrides.tableId || tableId,
