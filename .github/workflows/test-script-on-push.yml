@@ -7,7 +7,7 @@ on:
 jobs:
   test_and_deploy:
     name: Test and Deploy Bun Package
-    runs-on: [amd64, dind24]
+    runs-on: ubuntu-latest
     container: 
       image: registry.kings.ninja/forgejo-dind:2.1.0
     steps:
