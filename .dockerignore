@@ -1,0 +1,27 @@
+# CI/CD related files and directories
+ci/
+.github/
+
+# Development files
+.git/
+.gitignore
+
+# Production files
+# node_modules/
+# dist/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/

@@ -1,0 +1,33 @@
+name: Deploy Bun Package on CI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  test_and_deploy:
+    name: Test and Deploy Bun Package
+    runs-on: [amd64, dind24]
+    container: 
+      image: registry.kings.ninja/forgejo-dind:2.1.0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          bun install
+      
+      - name: Run tests
+        run: |
+          bun run test
+      
+      - name: Build package
+        run: |
+          bun run build
+
+      - name: List files
+        run: |
+          echo "Package built successfully and ready for deployment"
+          echo "Built files are in dist/ directory"
+          ls -la .
