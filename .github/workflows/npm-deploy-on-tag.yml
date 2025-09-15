@@ -1,4 +1,4 @@
-name: Deploy Bun Package to NPM
+name: Deploy Bun Package on CI
 
 permissions:
   contents: read
