@@ -148,7 +148,7 @@ const logger = createTraceLoggerOnNocoDB({
   baseUrl: "https://mynocodb.app.railway.app",
   tableId: "table_123",
   topic: "user-api",
-  timezone: "Asia/Seoul" // Optional, default: "Asia/Seoul"
+  // timezone: "Asia/Seoul" // Optional, default: "UTC"
 });
 
 // Usage example

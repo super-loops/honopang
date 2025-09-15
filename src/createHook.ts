@@ -134,7 +134,7 @@ type TraceProc = {
  * 
  * @example
  * ```typescript
- * // 기본 로거 생성 (Asia/Seoul 타임존)
+ * // 기본 로거 생성 (UTC 타임존)
  * const logger = createTraceLoggerOnNocoDB({
  *   xcToken: "your-nocodb-token",
  *   baseUrl: "https://nocodb.example.com",
@@ -182,7 +182,7 @@ type TraceProc = {
  * - 기본 시간대는 Asia/Seoul이며, timezone 옵션으로 변경 가능합니다
  * - NocoDB API 엔드포인트는 `/v1/race/{tableId}` 형식을 사용합니다
  */
-export function createTraceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, timezone = "Asia/Seoul" }: CreateTraceProps): TraceProc {
+export function createTraceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, timezone = "UTC" }: CreateTraceProps): TraceProc {
   const nocoDbHostUrl: string = baseUrl;
   const nocoDbTableId: string = tableId;
   const recordTopic: string = topic || "undefined";
@@ -234,9 +234,9 @@ export function createTraceLoggerOnNocoDB({ xcToken, baseUrl, tableId, topic, ti
     // NocoDB에 로그를 남김. 이 로직은 다른 로직을 중단되게 만들면 안됨.
     async function sendTraceLog() {
       try {
-        // 전체 데이터 전송
+        // 전체 데이터 전송 (UTC 시간으로 표준화하여 전송)
         const beginDateTime = DateTime.fromMillis(raceLog.begin_at, {
-          zone: logTimezone,
+          zone: "UTC",
         });
         const formattedTime = beginDateTime.toFormat("yyyy-MM-dd HH:mm:ss")
         const sendData = {
