@@ -8,12 +8,15 @@ jobs:
   test_and_deploy:
     name: Test and Deploy Bun Package
     runs-on: ubuntu-latest
-    container: 
-      image: registry.kings.ninja/forgejo-dind:2.1.0
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+          
       - name: Install dependencies
         run: |
           bun install
