@@ -1,13 +1,11 @@
 name: Deploy NPM Package on Tag
 
 permissions:
-  contents: read
+  contents: write  # 태그 푸시를 위해 write 권한 필요
   packages: write
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
 
 env:
   NPM_REGISTRY_URL: https://registry.npmjs.org/
@@ -50,5 +48,34 @@ jobs:
           echo "//registry.npmjs.org/:_authToken=${{ env.NPM_AUTH_TOKEN }}" >> ~/.npmrc
 
       - name: Publish to NPM registry
+        id: npm_publish
         run: |
+          echo "🚀 Publishing to NPM..."
           npm publish --registry=${{ env.NPM_REGISTRY_URL }}
+          echo "✅ NPM package published successfully!"
+
+      - name: Get package version and create tag
+        if: steps.npm_publish.outcome == 'success'
+        run: |
+          # Read version from package.json
+          VERSION=$(node -p "require('./package.json').version")
+          TAG_NAME="v$VERSION"
+          
+          echo "📦 Package version: $VERSION"
+          echo "🏷️ Creating tag: $TAG_NAME"
+          
+          # Get current commit author information
+          COMMIT_EMAIL=$(git log -1 --pretty=format:'%ae')
+          COMMIT_NAME=$(git log -1 --pretty=format:'%an')
+          
+          echo "👤 Using commit author: $COMMIT_NAME <$COMMIT_EMAIL>"
+          
+          # Configure Git
+          git config --local user.email "$COMMIT_EMAIL"
+          git config --local user.name "$COMMIT_NAME"
+          
+          # Create and push tag
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+          
+          echo "✅ Tag $TAG_NAME created and pushed successfully!"

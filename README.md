@@ -1,4 +1,4 @@
-# Honopang 🚀
+# Honopang (on Railway Functions) 🚀
 
 A utility library for Bun functions on Railway.
 
@@ -9,19 +9,22 @@ A utility library for Bun functions on Railway.
 - Want to easily protect APIs
 - Want to automatically record API execution logs to NocoDB
 
-## Before Using This Library
+## ⚠️ Before Using This Library
+
+**This library is specifically designed for Railway's Bun runtime environment only.**
 
 Please note that this library is specifically designed for Railway's Bun and Hono environment, not for Node.js environments.
 
 - **Runtime**: Bun v1.2.8+
+- **Platform**: Railway Functions only
 - **Included Framework**: Hono, luxon
 - **Target**: Railway Bun Functions
 
-This code was made public only because Railway's bun-function does not support private code dependencies. If Railway had supported private code usage, this library would not have been released publicly. Please consider carefully whether this library is truly helpful for your use case before using it.
+⚠️ **Important**: This code was made public only because Railway's bun-function does not support private code dependencies. If Railway had supported private code usage, this library would not have been released publicly. Please consider carefully whether this library is truly helpful for your use case before using it.
 
 ## 🎯 Key Features
 
-- **Request Parsing**: Auto-parse and validate requests from various Content-Types
+- **Request Payload Parsing**: Auto-parse and validate requests from various Content-Types
 - **Error Handling**: HTTP status error management with standardized responses
 - **Authentication**: Bearer token-based middleware for protected routes
 - **Race Logger**: Automatic API execution tracking and NocoDB logging
