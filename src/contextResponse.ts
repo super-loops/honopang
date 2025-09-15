@@ -26,7 +26,7 @@ export function responseJsonError(c: Context, error: Error | StatusError, verbos
     console.error("[ERROR] responeOfError:", error);
   }
   const status: number = 'status' in error ? error.status : 500
-  return c.json({ error: error.message }, status as any);
+  return c.json({ status, message: error.message }, status as any);
 }
 
 export function responseTextError(c: Context, error: Error | StatusError, verbose: boolean = true) {

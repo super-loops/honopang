@@ -40,7 +40,7 @@ describe("responseJsonError", () => {
       responseJsonError(context, error);
       const lastCall = context.getLastJsonCall();
 
-      expect(lastCall.data).toEqual({ error: "Not Found" });
+      expect(lastCall.data).toEqual({ status: 404, message: "Not Found" });
       expect(lastCall.status).toBe(404);
     });
 
@@ -52,21 +52,21 @@ describe("responseJsonError", () => {
       responseJsonError(context, badRequestError);
       let lastCall = context.getLastJsonCall();
       expect(lastCall.status).toBe(400);
-      expect(lastCall.data.error).toBe("Bad Request");
+      expect(lastCall.data).toEqual({ status: 400, message: "Bad Request" });
 
       // 500 Internal Server Error
       const serverError = new StatusError("Internal Server Error", 500);
       responseJsonError(context, serverError);
       lastCall = context.getLastJsonCall();
       expect(lastCall.status).toBe(500);
-      expect(lastCall.data.error).toBe("Internal Server Error");
+      expect(lastCall.data).toEqual({ status: 500, message: "Internal Server Error" });
 
       // 401 Unauthorized
       const unauthorizedError = new StatusError("Unauthorized", 401);
       responseJsonError(context, unauthorizedError);
       lastCall = context.getLastJsonCall();
       expect(lastCall.status).toBe(401);
-      expect(lastCall.data.error).toBe("Unauthorized");
+      expect(lastCall.data).toEqual({ status: 401, message: "Unauthorized" });
     });
 
     test("숫자로 생성된 StatusError 처리", () => {
@@ -76,7 +76,7 @@ describe("responseJsonError", () => {
       responseJsonError(context, error);
       const lastCall = context.getLastJsonCall();
 
-      expect(lastCall.data).toEqual({ error: "Unprocessable Entity" });
+      expect(lastCall.data).toEqual({ status: 422, message: "Unprocessable Entity" });
       expect(lastCall.status).toBe(422);
     });
   });
@@ -89,7 +89,7 @@ describe("responseJsonError", () => {
       responseJsonError(context, error);
       const lastCall = context.getLastJsonCall();
 
-      expect(lastCall.data).toEqual({ error: "Something went wrong" });
+      expect(lastCall.data).toEqual({ status: 500, message: "Something went wrong" });
       expect(lastCall.status).toBe(500);
     });
 
@@ -100,7 +100,7 @@ describe("responseJsonError", () => {
       responseJsonError(context, error);
       const lastCall = context.getLastJsonCall();
 
-      expect(lastCall.data).toEqual({ error: "Type error occurred" });
+      expect(lastCall.data).toEqual({ status: 500, message: "Type error occurred" });
       expect(lastCall.status).toBe(500);
     });
 
@@ -111,7 +111,7 @@ describe("responseJsonError", () => {
       responseJsonError(context, error);
       const lastCall = context.getLastJsonCall();
 
-      expect(lastCall.data).toEqual({ error: "Reference error occurred" });
+      expect(lastCall.data).toEqual({ status: 500, message: "Reference error occurred" });
       expect(lastCall.status).toBe(500);
     });
   });
@@ -159,7 +159,7 @@ describe("responseJsonError", () => {
       responseJsonError(context, error);
       const lastCall = context.getLastJsonCall();
 
-      expect(lastCall.data).toEqual({ error: "" });
+      expect(lastCall.data).toEqual({ status: 500, message: "" });
       expect(lastCall.status).toBe(500);
     });
 
@@ -171,7 +171,7 @@ describe("responseJsonError", () => {
       responseJsonError(context, error);
       const lastCall = context.getLastJsonCall();
 
-      expect(lastCall.data.error).toBe(longMessage);
+      expect(lastCall.data).toEqual({ status: 400, message: longMessage });
       expect(lastCall.status).toBe(400);
     });
 
@@ -183,7 +183,7 @@ describe("responseJsonError", () => {
       responseJsonError(context, error);
       const lastCall = context.getLastJsonCall();
 
-      expect(lastCall.data.error).toBe(specialMessage);
+      expect(lastCall.data).toEqual({ status: 400, message: specialMessage });
       expect(lastCall.status).toBe(400);
     });
   });
@@ -198,8 +198,10 @@ describe("responseJsonError", () => {
 
       expect(lastCall).toHaveProperty("data");
       expect(lastCall).toHaveProperty("status");
-      expect(lastCall.data).toHaveProperty("error");
-      expect(typeof lastCall.data.error).toBe("string");
+      expect(lastCall.data).toHaveProperty("status");
+      expect(lastCall.data).toHaveProperty("message");
+      expect(typeof lastCall.data.status).toBe("number");
+      expect(typeof lastCall.data.message).toBe("string");
       expect(typeof lastCall.status).toBe("number");
     });
 
@@ -212,7 +214,7 @@ describe("responseJsonError", () => {
 
       // c.json이 호출되었는지 확인
       expect(lastCall).toBeDefined();
-      expect(lastCall.data).toEqual({ error: "Test error" });
+      expect(lastCall.data).toEqual({ status: 400, message: "Test error" });
     });
   });
 
@@ -229,7 +231,7 @@ describe("responseJsonError", () => {
       const lastCall = context.getLastJsonCall();
 
       expect(lastCall.status).toBe(418);
-      expect(lastCall.data.error).toBe("Custom error");
+      expect(lastCall.data).toEqual({ status: 418, message: "Custom error" });
     });
 
     test("status 속성이 없는 객체는 일반 Error로 처리", () => {
@@ -243,7 +245,7 @@ describe("responseJsonError", () => {
       const lastCall = context.getLastJsonCall();
 
       expect(lastCall.status).toBe(500);
-      expect(lastCall.data.error).toBe("Custom error without status");
+      expect(lastCall.data).toEqual({ status: 500, message: "Custom error without status" });
     });
   });
 });

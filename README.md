@@ -102,6 +102,7 @@ app.get("/user/foo", (c) => {
     throw new Error("Foo Error")
   } catch (error) {
     return responseJsonError(c, error);
+    // { status: 500, message: "Foo Error"}
   }
 });
 
@@ -110,6 +111,7 @@ app.get("/user/bar", (c) => {
     throw new StatusError("Bar Error", 501)
   } catch (error) {
     return responseJsonError(c, error);
+    // { status: 501, message: "Bar Error"}
   }
 });
 ```

@@ -47,7 +47,7 @@ describe("createNextHandlerIfAuthorization", () => {
 
       expect(result).toBeDefined();
       expect(context.getResponseStatus()).toBe(403);
-      expect(context.getResponseData()).toEqual({ error: "Authorization required" });
+      expect(context.getResponseData()).toEqual({ status: 403, message: "Authorization required" });
       expect(next.wasCalled()).toBe(false);
     });
 
@@ -63,7 +63,7 @@ describe("createNextHandlerIfAuthorization", () => {
 
       expect(result).toBeDefined();
       expect(context.getResponseStatus()).toBe(401);
-      expect(context.getResponseData()).toEqual({ error: "Authorization format invaild" });
+      expect(context.getResponseData()).toEqual({ status: 401, message: "Authorization format invaild" });
       expect(next.wasCalled()).toBe(false);
     });
 
@@ -79,7 +79,7 @@ describe("createNextHandlerIfAuthorization", () => {
 
       expect(result).toBeDefined();
       expect(context.getResponseStatus()).toBe(403);
-      expect(context.getResponseData()).toEqual({ error: "Authorization required" });
+      expect(context.getResponseData()).toEqual({ status: 403, message: "Authorization required" });
       expect(next.wasCalled()).toBe(false);
     });
   });
@@ -175,7 +175,7 @@ describe("createNextHandlerIfAuthorization", () => {
 
       expect(result).toBeDefined();
       expect(context.getResponseStatus()).toBe(500); // catch 블록에서 500으로 변환
-      expect(context.getResponseData()).toEqual({ error: "Internal Server Error" });
+      expect(context.getResponseData()).toEqual({ status: 500, message: "Internal Server Error" });
       expect(next.wasCalled()).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith("Error occurred during authorization:", expect.any(StatusError));
 
@@ -197,7 +197,7 @@ describe("createNextHandlerIfAuthorization", () => {
 
       expect(result).toBeDefined();
       expect(context.getResponseStatus()).toBe(500); // catch 블록에서 500으로 변환
-      expect(context.getResponseData()).toEqual({ error: "Internal Server Error" });
+      expect(context.getResponseData()).toEqual({ status: 500, message: "Internal Server Error" });
       expect(next.wasCalled()).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith("Error occurred during authorization:", expect.any(StatusError));
 
@@ -218,7 +218,7 @@ describe("createNextHandlerIfAuthorization", () => {
 
       expect(result).toBeDefined();
       expect(context.getResponseStatus()).toBe(500);
-      expect(context.getResponseData()).toEqual({ error: "Internal Server Error" }); // catch 블록에서 일반적인 메시지로 변환
+      expect(context.getResponseData()).toEqual({ status: 500, message: "Internal Server Error" }); // catch 블록에서 일반적인 메시지로 변환
       expect(next.wasCalled()).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith("Unexpected authorization process:", "unexpected");
       expect(consoleSpy).toHaveBeenCalledWith("Error occurred during authorization:", expect.any(StatusError));
@@ -244,7 +244,7 @@ describe("createNextHandlerIfAuthorization", () => {
 
       expect(result).toBeDefined();
       expect(context.getResponseStatus()).toBe(500);
-      expect(context.getResponseData()).toEqual({ error: "Internal Server Error" });
+      expect(context.getResponseData()).toEqual({ status: 500, message: "Internal Server Error" });
       expect(next.wasCalled()).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith("Error occurred during authorization:", expect.any(Error));
 
@@ -267,7 +267,7 @@ describe("createNextHandlerIfAuthorization", () => {
 
       expect(result).toBeDefined();
       expect(context.getResponseStatus()).toBe(500);
-      expect(context.getResponseData()).toEqual({ error: "Internal Server Error" });
+      expect(context.getResponseData()).toEqual({ status: 500, message: "Internal Server Error" });
       expect(next.wasCalled()).toBe(false);
       expect(consoleSpy).toHaveBeenCalled();
 
@@ -304,7 +304,7 @@ describe("createNextHandlerIfAuthorization", () => {
       const invalidResult = await handler(invalidContext, invalidNext);
       expect(invalidResult).toBeDefined();
       expect(invalidContext.getResponseStatus()).toBe(500); // catch 블록에서 500으로 변환
-      expect(invalidContext.getResponseData()).toEqual({ error: "Internal Server Error" });
+      expect(invalidContext.getResponseData()).toEqual({ status: 500, message: "Internal Server Error" });
       expect(invalidNext.wasCalled()).toBe(false);
 
       consoleSpy.mockRestore();
@@ -344,7 +344,7 @@ describe("createNextHandlerIfAuthorization", () => {
       const expiredResult = await handler(expiredContext, expiredNext);
       expect(expiredResult).toBeDefined();
       expect(expiredContext.getResponseStatus()).toBe(500); // catch 블록에서 500으로 변환
-      expect(expiredContext.getResponseData()).toEqual({ error: "Internal Server Error" });
+      expect(expiredContext.getResponseData()).toEqual({ status: 500, message: "Internal Server Error" });
       expect(expiredNext.wasCalled()).toBe(false);
 
       consoleSpy1.mockRestore();
@@ -360,7 +360,7 @@ describe("createNextHandlerIfAuthorization", () => {
       const invalidResult = await handler(invalidContext, invalidNext);
       expect(invalidResult).toBeDefined();
       expect(invalidContext.getResponseStatus()).toBe(500); // catch 블록에서 500으로 변환
-      expect(invalidContext.getResponseData()).toEqual({ error: "Internal Server Error" });
+      expect(invalidContext.getResponseData()).toEqual({ status: 500, message: "Internal Server Error" });
       expect(invalidNext.wasCalled()).toBe(false);
 
       consoleSpy2.mockRestore();
