@@ -1,4 +1,7 @@
-import { type Context } from "hono";
+// Hono Response 유틸리티 함수들
+// Context 없이 직접 Response 객체를 반환하는 방식으로 구현
+// 모든 헤더 관리 미들웨어와 완벽히 호환됩니다.
+
 import { type FC } from "hono/jsx";
 
 /* USAGE
@@ -6,7 +9,7 @@ import { type FC } from "hono/jsx";
     try {
       throw new Error("Foo Error")
     } catch (error) {
-      return responseJsonError(c, error); // 기본 렌더링
+      return responseJsonError(error); // Context 없이 사용
     }
   });
   
@@ -15,7 +18,7 @@ import { type FC } from "hono/jsx";
       throw new StatusError("Bar Error", 501)
     }
     catch (error) {
-      return responseJsonError(c, error, (json) => {
+      return responseJsonError(error, (json) => {
         return { ...json, detail: { timestamp: new Date().toISOString() } };
       });
     }
@@ -25,35 +28,44 @@ import { type FC } from "hono/jsx";
     try {
       throw new Error("Text Error")
     } catch (error) {
-      return responseTextError(c, error, (text) => `[Error] ${text}`);
+      return responseTextError(error, (text) => `[Error] ${text}`);
     }
   });
 */
 
 export function responseJsonError(
-  c: Context,
   error: unknown,
   transform?: (json: { status: number; message: string }) => any
-) {
+): Response {
   const status: number = (typeof error === 'object' && error && 'status' in error) ? (error.status as number) : 500;
   const defaultJson = { status, message: (error as any)?.message };
   const responseJson = transform ? transform(defaultJson) : defaultJson;
-  return c.json(responseJson, status as any);
+
+  return new Response(JSON.stringify(responseJson), {
+    status,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
 }
 
 export function responseTextError(
-  c: Context,
   error: unknown,
   transform?: (text: string) => string
-) {
+): Response {
   const status: number = (typeof error === 'object' && error && 'status' in error) ? (error.status as number) : 500;
   const defaultText = `Error: ${(error as any)?.message}`;
   const responseText = transform ? transform(defaultText) : defaultText;
-  return c.text(responseText, status as any);
+
+  return new Response(responseText, {
+    status,
+    headers: {
+      'Content-Type': 'text/plain; charset=UTF-8'
+    }
+  });
 }
 
 /* USAGE
-  import { jsx } from 'hono/jsx';
   import { type FC } from 'hono/jsx';
 
   // JSX 컴포넌트를 사용한 에러 페이지
@@ -62,8 +74,8 @@ export function responseTextError(
       <head><title>Error</title></head>
       <body>
         <h1>Oops! Something went wrong</h1>
-        <p>{error.message}</p>
-        <small>Status: {'status' in error ? error.status : 500}</small>
+        <p>{(error as any)?.message}</p>
+        <small>Status: {(error as any)?.status || 500}</small>
       </body>
     </html>
   );
@@ -73,16 +85,34 @@ export function responseTextError(
       throw new StatusError("Baz Error", 404)
     }
     catch (error) {
-      return responseHtmlError(c, error, ErrorPage);
+      return responseHtmlError(error, ErrorPage);
+    }
+  });
+
+  // 또는 문자열 템플릿 사용
+  app.get("/user/simple", (c)=>{
+    try {
+      throw new StatusError("Simple Error", 500)
+    }
+    catch (error) {
+      return responseHtmlError(error, `
+        <html>
+          <head><title>Error</title></head>
+          <body>
+            <h1>Oops! Something went wrong</h1>
+            <p>${(error as any)?.message}</p>
+            <small>Status: ${(error as any)?.status || 500}</small>
+          </body>
+        </html>
+      `);
     }
   });
 */
 
 export function responseHtmlError(
-  c: Context,
   error: unknown,
   template?: FC<{ error: unknown }> | string
-) {
+): Response {
   const status: number = (typeof error === 'object' && error && 'status' in error) ? (error.status as number) : 500;
 
   if (template) {
@@ -92,17 +122,39 @@ export function responseHtmlError(
         const Component = template;
         const element = Component({ error });
         const htmlString = element ? element.toString() : `<h1>Error</h1><p>${(error as any)?.message}</p>`;
-        return c.html(htmlString, status as any);
+
+        return new Response(htmlString, {
+          status,
+          headers: {
+            'Content-Type': 'text/html; charset=UTF-8'
+          }
+        });
       } catch (renderError) {
         console.error("[ERROR] Failed to render template component:", renderError);
-        return c.html(`<h1>Error</h1><p>${(error as any)?.message}</p>`, status as any);
+        return new Response(`<h1>Error</h1><p>${(error as any)?.message}</p>`, {
+          status,
+          headers: {
+            'Content-Type': 'text/html; charset=UTF-8'
+          }
+        });
       }
     } else {
       // 문자열 템플릿인 경우
-      return c.html(template, status as any);
+      return new Response(template, {
+        status,
+        headers: {
+          'Content-Type': 'text/html; charset=UTF-8'
+        }
+      });
     }
   } else {
     // 기본 템플릿
-    return c.html(`<h1>Error</h1><p>${(error as any)?.message}</p>`, status as any);
+    const html = `<h1>Error</h1><p>${(error as any)?.message}</p>`;
+    return new Response(html, {
+      status,
+      headers: {
+        'Content-Type': 'text/html; charset=UTF-8'
+      }
+    });
   }
 }

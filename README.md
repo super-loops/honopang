@@ -104,7 +104,7 @@ app.get("/user/simple", (c) => {
   try {
     throw new Error("Something went wrong");
   } catch (error) {
-    return responseJsonError(c, error);
+    return responseJsonError(error);
     // Returns: { status: 500, message: "Something went wrong" }
   }
 });
@@ -113,7 +113,7 @@ app.get("/user/status", (c) => {
   try {
     throw new StatusError("User not found", 404);
   } catch (error) {
-    return responseJsonError(c, error);
+    return responseJsonError(error);
     // Returns: { status: 404, message: "User not found" }
   }
 });
@@ -123,7 +123,7 @@ app.get("/user/detailed", (c) => {
   try {
     throw new StatusError("Validation failed", 400);
   } catch (error) {
-    return responseJsonError(c, error, (json) => {
+    return responseJsonError(error, (json) => {
       return { 
         ...json, 
         timestamp: new Date().toISOString(),
@@ -145,7 +145,7 @@ app.get("/api/status", (c) => {
   try {
     throw new StatusError("Service Unavailable", 503);
   } catch (error) {
-    return responseTextError(c, error);
+    return responseTextError(error);
     // Returns: "Error: Service Unavailable" with status 503
   }
 });
@@ -155,7 +155,7 @@ app.get("/api/logs", (c) => {
   try {
     throw new StatusError("Log file not found", 404);
   } catch (error) {
-    return responseTextError(c, error, (text) => `[API ERROR] ${text}`);
+    return responseTextError(error, (text) => `[API ERROR] ${text}`);
     // Returns: "[API ERROR] Error: Log file not found" with status 404
   }
 });
@@ -174,7 +174,7 @@ app.get("/page/simple", (c) => {
   try {
     throw new Error("Page error");
   } catch (error) {
-    return responseHtmlError(c, error);
+    return responseHtmlError(error);
     // Returns: "<h1>Error</h1><p>Page error</p>" with status 500
   }
 });
@@ -195,7 +195,7 @@ app.get("/page/user", (c) => {
   try {
     throw new StatusError("User Not Found", 404);
   } catch (error) {
-    return responseHtmlError(c, error, ErrorPage);
+    return responseHtmlError(error, ErrorPage);
   }
 });
 
@@ -205,7 +205,7 @@ app.get("/page/admin", (c) => {
     throw new StatusError("Access Denied", 403);
   } catch (error) {
     const template = `<html><body><h1>Access Denied</h1><p>${error.message}</p></body></html>`;
-    return responseHtmlError(c, error, template);
+    return responseHtmlError(error, template);
   }
 });
 ```

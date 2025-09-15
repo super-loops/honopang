@@ -65,7 +65,7 @@ export function createNextHandlerIfAuthorization(validateToken: (token: string) 
         throw error;
       }
     } catch (error) {
-      return responseJsonError(c, error as (Error | StatusError));
+      return responseJsonError(error);
     }
   }
 }
